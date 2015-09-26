@@ -23,7 +23,7 @@ type MatchResult struct {
 // TextProcessor is an interface providing a sane way to run each processor
 // type with a simple Run method.
 type TextProcessor interface {
-	Run(string) (*MatchResult, error)
+	Run(string) *MatchResult
 }
 
 // regexCustom takes in a string of text and a regular expression statement
