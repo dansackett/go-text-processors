@@ -1,7 +1,6 @@
 package text_processors
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -29,19 +28,17 @@ type TextProcessor interface {
 // regexCustom takes in a string of text and a regular expression statement
 // returning a MatchResult object. It is the barebones implementation of what
 // processors do.
-func regexCustom(s string, re string) *MatchResult {
+func regexCustom(s string, re *regexp.Regexp) *MatchResult {
 	var res []*Match
 
-	r := regexp.MustCompile(re)
-	matches := r.FindAllString(s, -1)
-	idxs := r.FindAllStringIndex(s, -1)
+	idxs := re.FindAllStringIndex(s, -1)
 
-	if len(matches) == 0 {
+	if len(idxs) == 0 {
 		return &MatchResult{Text: s, Matches: res}
 	}
 
-	for i, m := range matches {
-		res = append(res, &Match{Match: m, Indices: idxs[i]})
+	for _, m := range idxs {
+		res = append(res, &Match{Match: s[m[0]:m[1]], Indices: m})
 	}
 
 	return &MatchResult{Text: s, Matches: res}
@@ -51,7 +48,7 @@ func regexCustom(s string, re string) *MatchResult {
 // in a string of text.
 type passiveVoice struct{}
 
-// PassiveVoiceProcessor builds a references to the private passiveVoice
+// PassiveVoiceProcessor builds a reference to the private passiveVoice
 // object giving us a way to use it outside the context of this library.
 func PassiveVoiceProcessor() *passiveVoice {
 	return &passiveVoice{}
@@ -60,14 +57,14 @@ func PassiveVoiceProcessor() *passiveVoice {
 // Run satisfies the TextPrcoessor interface for the passiveVoice object
 // returning a MatchResult based on what it finds.
 func (p *passiveVoice) Run(s string) *MatchResult {
-	return regexCustom(s, fmt.Sprintf("\\b(?i)(?:am|are|were|being|is|been|was|be)\\b\\s*(?:[\\w]+ed|%s)\\b", strings.Join(PassiveIrregulars, "|")))
+	return regexCustom(s, PassiveRegex)
 }
 
 // weaselWords is a private object for finding matches of potential weasel
 // words in a string of text.
 type weaselWords struct{}
 
-// WeaselWordProcessor builds a references to the private weaselWords
+// WeaselWordProcessor builds a reference to the private weaselWords
 // object giving us a way to use it outside the context of this library.
 func WeaselWordProcessor() *weaselWords {
 	return &weaselWords{}
@@ -76,14 +73,14 @@ func WeaselWordProcessor() *weaselWords {
 // Run satisfies the TextPrcoessor interface for the weaselWords object
 // returning a MatchResult based on what it finds.
 func (p *weaselWords) Run(s string) *MatchResult {
-	return regexCustom(s, fmt.Sprintf("\\b(?i)(%s)\\b", strings.Join(Weasels, "|")))
+	return regexCustom(s, WeaselRegex)
 }
 
 // tooWordy is a private object for finding matches of potential wordy phrases
 // in a string of text.
 type tooWordy struct{}
 
-// TooWordyProcessor builds a references to the private tooWordy
+// TooWordyProcessor builds a reference to the private tooWordy
 // object giving us a way to use it outside the context of this library.
 func TooWordyProcessor() *tooWordy {
 	return &tooWordy{}
@@ -92,13 +89,13 @@ func TooWordyProcessor() *tooWordy {
 // Run satisfies the TextPrcoessor interface for the tooWordy object
 // returning a MatchResult based on what it finds.
 func (p *tooWordy) Run(s string) *MatchResult {
-	return regexCustom(s, fmt.Sprintf("\\b(?i)(%s)\\b", strings.Join(Wordy, "|")))
+	return regexCustom(s, WordyRegex)
 }
 
 // adverbs is a private object for finding matches of adverbs in a string of text.
 type adverbs struct{}
 
-// AdverbProcessor builds a references to the private adverbs
+// AdverbProcessor builds a reference to the private adverbs
 // object giving us a way to use it outside the context of this library.
 func AdverbProcessor() *adverbs {
 	return &adverbs{}
@@ -107,13 +104,13 @@ func AdverbProcessor() *adverbs {
 // Run satisfies the TextPrcoessor interface for the adverbs object
 // returning a MatchResult based on what it finds.
 func (p *adverbs) Run(s string) *MatchResult {
-	return regexCustom(s, fmt.Sprintf("\\b(?i)(%s)\\b", strings.Join(Adverbs, "|")))
+	return regexCustom(s, AdverbRegex)
 }
 
 // cliches is a private object for finding matches of cliches in a string of text.
 type cliches struct{}
 
-// ClicheProcessor builds a references to the private cliches
+// ClicheProcessor builds a reference to the private cliches
 // object giving us a way to use it outside the context of this library.
 func ClicheProcessor() *cliches {
 	return &cliches{}
@@ -122,14 +119,14 @@ func ClicheProcessor() *cliches {
 // Run satisfies the TextPrcoessor interface for the cliches object
 // returning a MatchResult based on what it finds.
 func (p *cliches) Run(s string) *MatchResult {
-	return regexCustom(s, fmt.Sprintf("\\b(?i)(%s)\\b", strings.Join(Cliches, "|")))
+	return regexCustom(s, ClicheRegex)
 }
 
 // lexicalIllusion is a private object for finding matches of lexical
 // illusions in a string of text.
 type lexicalIllusion struct{}
 
-// LexicalIllusionProcessor builds a references to the private lexicalIllusion
+// LexicalIllusionProcessor builds a reference to the private lexicalIllusion
 // object giving us a way to use it outside the context of this library.
 func LexicalIllusionProcessor() *lexicalIllusion {
 	return &lexicalIllusion{}
@@ -141,7 +138,7 @@ func (p *lexicalIllusion) Run(s string) *MatchResult {
 	var res []*Match
 	var lastMatch string
 
-	initialRes := regexCustom(s, "(\\w+)")
+	initialRes := regexCustom(s, IllusionRegex)
 
 	for _, match := range initialRes.Matches {
 		if match.Match == lastMatch {
